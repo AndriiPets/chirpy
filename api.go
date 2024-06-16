@@ -2,9 +2,11 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/AndriiPets/chirpy/database"
 	"github.com/AndriiPets/chirpy/utils"
 )
 
@@ -14,9 +16,34 @@ func handleReady(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 }
 
-func validateChirp(w http.ResponseWriter, r *http.Request) {
+func getChirps(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 
+	
+	db, erro := database.NewDB("database.json")
+	if erro != nil {
+		log.Fatalf("Unable to create a database :%s", erro)
+	}
+	chirps, _ := db.GetChirps()
+	respondWithJSON(w, 201, chirps)
+}
+
+func getChirp(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+
+	
+	db, erro := database.NewDB("database.json")
+	if erro != nil {
+		log.Fatalf("Unable to create a database :%s", erro)
+	}
+	chirp, err := db.GetChirp(r.PathValue("id"))
+	if err != nil {
+		respondWithError(w, 404, err.Error())
+	}
+	respondWithJSON(w, 200, chirp)
+}
+
+func postChirp(w http.ResponseWriter, r *http.Request) {
 	decoder := json.NewDecoder(r.Body)
 	message := messageChirp{}
 	err := decoder.Decode(&message)
@@ -34,10 +61,18 @@ func validateChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resp := returnClean{
-		Clean: utils.CleanInput(message.Body),
+	db, erro := database.NewDB("database.json")
+	if erro != nil {
+		fmt.Printf("Unable to create a database :%s", erro)
 	}
-	respondWithJSON(w, 200, resp)
+	chirp, errr := db.CreateChirp(utils.CleanInput(message.Body))
+
+	if errr != nil {
+		fmt.Printf("unable to create a chirp :%s\n", errr)
+	}
+
+	respondWithJSON(w, 200, chirp)
+
 }
 
 
