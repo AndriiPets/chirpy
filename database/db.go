@@ -20,8 +20,20 @@ type Chirp struct {
 	Body string `json:"body"`
 }
 
+type User struct {
+	Id int `json:"id"`
+	Email string `json:"email"`
+	Password string `json:"password"`
+}
+
+type UserNoPassword struct {
+	Id int `json:"id"`
+	Email string `json:"email"`
+}
+
 type DBStructure struct {
 	Chirps map[int]Chirp `json:"chirps"`
+	Users map[int]User `json:"users"`
 }
 
 func NewDB(path string) (*DB, error) {
@@ -70,6 +82,33 @@ func (db *DB) CreateChirp(body string) (Chirp, error) {
 	
 }
 
+func (db *DB) CreateUser(email, password string) (User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	ids ++
+	id := ids 
+	user := User{
+		Id: id,
+		Email: email,
+		Password: password,
+	}
+	database, err := db.readDatabase()
+	if err != nil {
+		return User{}, err
+	}
+	if len(database.Users) == 0 {
+		database.Users = make(map[int]User)
+	}
+
+	database.Users[id] = user
+
+	db.writeDatabase(database)
+
+	return user, nil
+	
+}
+
 func (db *DB) GetChirps() ([]Chirp, error) {
 	db.mux.Lock()
 	defer db.mux.Unlock()
@@ -86,6 +125,25 @@ func (db *DB) GetChirps() ([]Chirp, error) {
 	}
 
 	return chirps, nil
+
+}
+
+func (db *DB) GetUsers() ([]User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	users := []User{}
+
+	database, err := db.readDatabase()
+	if err != nil {
+		return users, err
+	}
+
+	for _, v := range database.Users {
+		users = append(users, v)
+	}
+
+	return users, nil
 
 }
 
