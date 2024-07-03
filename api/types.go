@@ -1,5 +1,13 @@
 package api
 
+import "github.com/AndriiPets/chirpy/database"
+
+type Api struct {
+	database *database.DB
+	fileserverHits int
+	jwtSecret string
+}
+
 type returnError struct {
 	Error string `json:"error"`
 }

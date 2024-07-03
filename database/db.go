@@ -24,11 +24,13 @@ type User struct {
 	Id int `json:"id"`
 	Email string `json:"email"`
 	Password string `json:"password"`
+	Expire int `json:"expires_in_seconds"`
 }
 
 type UserNoPassword struct {
 	Id int `json:"id"`
 	Email string `json:"email"`
+	JWTtoken string `json:"token"`
 }
 
 type DBStructure struct {
@@ -145,6 +147,31 @@ func (db *DB) GetUsers() ([]User, error) {
 
 	return users, nil
 
+}
+// TODO: db didnt update the user
+func (db *DB) UpdateUser(id string, user User) (User, error) {
+	db.mux.Lock()
+	defer db.mux.Unlock()
+
+	index, err := strconv.Atoi(id)
+	if err != nil {
+		return User{}, err
+	}
+
+	database, err := db.readDatabase()
+	if err != nil {
+		return User{}, err
+	}
+
+	usr, ok := database.Users[index]
+	if !ok {
+		return User{}, fmt.Errorf("Id does not exist!")
+	}
+	usr.Email = user.Email
+	usr.Password = user.Password
+
+	database.Users[index] = usr
+	return usr, nil
 }
 
 func (db *DB) GetChirp(id string) (Chirp, error) {

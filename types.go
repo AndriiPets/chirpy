@@ -1,9 +1,5 @@
 package main
 
-type apiConfig struct {
-	fileserverHits int
-}
-
 type returnError struct {
 	Error string `json:"error"`
 }
